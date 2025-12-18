@@ -1,7 +1,7 @@
 TODO:
 - Important
     - Add variable for wait after movement, add as pause in server before doing calibration
-    - Rewrite Readme wit Copilot and spellcheck.
+    - Rewrite Readme and spellcheck.
     - Logo
     - Move inmemory log to file on srv. maybe
 - Less important

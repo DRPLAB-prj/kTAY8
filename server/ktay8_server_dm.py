@@ -7,9 +7,9 @@ except ImportError:
     YOLO_AVAILABLE = False
 
 # --- CONFIGURAZIONE DATA COLLECTION (TELEGRAM) ---
-# 1. Crea un bot con @BotFather su Telegram e incolla il token qui
+# Configurazione opzionale per la raccolta dati.
+# Se abilitata, le immagini verranno inviate al bot specificato.
 TELEGRAM_BOT_TOKEN = "" 
-# 2. Invia un messaggio al bot e ottieni il tuo Chat ID (es. usando @userinfobot)
 TELEGRAM_CHAT_ID = ""   
 # -------------------------------------------------
 
