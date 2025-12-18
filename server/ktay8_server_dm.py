@@ -1,8 +1,19 @@
-import copy, time, cv2, numpy as np
-from ktamv_server_io import Ktamv_Server_Io as io
+import copy, time, cv2, numpy as np, os, requests, threading
+from ktay8_server_io import Ktay8_Server_Io as io
+try:
+    from nozzle_detector import NozzleDetector
+    YOLO_AVAILABLE = True
+except ImportError:
+    YOLO_AVAILABLE = False
 
+# --- CONFIGURAZIONE DATA COLLECTION (TELEGRAM) ---
+# 1. Crea un bot con @BotFather su Telegram e incolla il token qui
+TELEGRAM_BOT_TOKEN = "" 
+# 2. Invia un messaggio al bot e ottieni il tuo Chat ID (es. usando @userinfobot)
+TELEGRAM_CHAT_ID = ""   
+# -------------------------------------------------
 
-class Ktamv_Server_Detection_Manager:
+class Ktay8_Server_Detection_Manager:
     uv = [None, None]
     __algorithm = None
     __io = None
@@ -28,11 +39,68 @@ class Ktamv_Server_Detection_Manager:
             # TAMV has 2 detectors, one for standard and one for relaxed
             self.createDetectors()
             
+            # --- YOLO / AI Integration ---
+            self.yolo_detector = None
+            if YOLO_AVAILABLE:
+                # Search for model files in current dir
+                model_files = [f for f in os.listdir('.') if f.endswith(('.tflite', '.onnx'))]
+                # Prefer tflite, then onnx
+                tflite_models = [f for f in model_files if f.endswith('.tflite')]
+                onnx_models = [f for f in model_files if f.endswith('.onnx')]
+                
+                model_path = None
+                if tflite_models:
+                    model_path = tflite_models[0]
+                elif onnx_models:
+                    model_path = onnx_models[0]
+                
+                if model_path:
+                    self.log(f"*** Loading AI Model: {model_path}")
+                    try:
+                        self.yolo_detector = NozzleDetector(model_path, conf_thres=0.4)
+                        self.log("*** AI Model loaded successfully.")
+                    except Exception as e:
+                        self.log(f"*** Failed to load AI Model: {e}")
+                else:
+                    self.log("*** No .tflite or .onnx model found. Falling back to Blob Detector.")
+            
             # send exiting to log
             self.log('*** exiting DetectionManager.__init__')
         except Exception as e:
             self.log('*** exception in DetectionManager.__init__: %s' % str(e))
             raise e
+
+    def send_data_to_telegram(self, image, result_data):
+        """
+        Invia l'immagine e i dati di rilevamento al bot Telegram in background.
+        """
+        if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+            return
+
+        def _send():
+            try:
+                # Encode image to jpg
+                _, img_encoded = cv2.imencode('.jpg', image)
+                img_bytes = img_encoded.tobytes()
+                
+                url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
+                
+                files = {
+                    'photo': ('capture.jpg', img_bytes, 'image/jpeg')
+                }
+                
+                data = {
+                    'chat_id': TELEGRAM_CHAT_ID,
+                    'caption': f"📸 Nozzle Detect\nRes: {result_data}\nAlg: {self.__algorithm}"
+                }
+                
+                requests.post(url, data=data, files=files, timeout=10)
+                self.log("Data sent to Telegram successfully.")
+            except Exception as e:
+                self.log(f"Failed to send data to Telegram: {e}")
+
+        # Run in thread to avoid blocking the printer
+        threading.Thread(target=_send).start()
 
     # timeout = 20: If no nozzle found in this time, timeout the function
     # min_matches = 3: Minimum amount of matches to confirm toolhead position after a move
@@ -47,6 +115,9 @@ class Ktamv_Server_Detection_Manager:
 
         while time.time() - start_time < timeout:
             frame = self.__io.get_single_frame()
+            # Save raw frame for data collection before processing
+            raw_frame = copy.deepcopy(frame)
+            
             positions, processed_frame = self.nozzleDetection(frame)
             if processed_frame is not None:
                 put_frame_func(processed_frame)
@@ -65,6 +136,12 @@ class Ktamv_Server_Detection_Manager:
                     # Send the frame and detection to the cloud if enabled.
                     if self.send_to_cloud:
                         self.__io.send_frame_to_cloud(frame, pos, self.__algorithm)
+                    
+                    # --- DATA COLLECTION (TELEGRAM) ---
+                    # Send the RAW frame + detection info
+                    self.send_data_to_telegram(raw_frame, f"Pos: {pos}")
+                    # ----------------------------------
+                    
                     break
             else:
                 self.log("Position found does not match last position. Last position: %s, current position: %s" % (str(last_pos), str(pos)))   
@@ -91,7 +168,7 @@ class Ktamv_Server_Detection_Manager:
         # self.log('*** exiting get_preview_frame')
         return
 
-# ----------------- TAMV Nozzle Detection as tested in ktamv_cv -----------------
+# ----------------- TAMV Nozzle Detection as tested in ktay8_cv -----------------
 
     def createDetectors(self):
         # Standard Parameters
@@ -175,9 +252,54 @@ class Ktamv_Server_Detection_Manager:
     def nozzleDetection(self, image):
         # working frame object
         nozzleDetectFrame = copy.deepcopy(image)
+        center = (None, None)
+        
+        # --- AI / YOLO Detection ---
+        if self.yolo_detector:
+            try:
+                results, _ = self.yolo_detector.infer(image)
+                
+                if results:
+                    self.__algorithm = "AI_YOLO"
+                    # Find best result (closest to center)
+                    img_h, img_w = image.shape[:2]
+                    img_center_x, img_center_y = img_w // 2, img_h // 2
+                    
+                    best_res = None
+                    min_dist = float('inf')
+                    
+                    for res in results:
+                        x1, y1, x2, y2 = res['box']
+                        cx = (x1 + x2) / 2
+                        cy = (y1 + y2) / 2
+                        dist = np.sqrt((cx - img_center_x)**2 + (cy - img_center_y)**2)
+                        
+                        if dist < min_dist:
+                            min_dist = dist
+                            best_res = res
+                            center = (int(cx), int(cy))
+                    
+                    # Draw results
+                    x1, y1, x2, y2 = map(int, best_res['box'])
+                    cv2.rectangle(nozzleDetectFrame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                    cv2.circle(nozzleDetectFrame, center, 5, (0, 0, 255), -1)
+                    label = f"Nozzle: {best_res['score']:.2f}"
+                    cv2.putText(nozzleDetectFrame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                    
+                    # Draw crosshair
+                    cv2.line(nozzleDetectFrame, (img_center_x, 0), (img_center_x, img_h), (255, 255, 255), 1)
+                    cv2.line(nozzleDetectFrame, (0, img_center_y), (img_w, img_center_y), (255, 255, 255), 1)
+                    
+                    self.log(f"AI Detection successful: {center}")
+                    return (center, nozzleDetectFrame)
+                    
+            except Exception as e:
+                self.log(f"AI Detection Error: {e}")
+                # Fallback to standard detection
+        
+        # --- Standard Blob Detection (Fallback) ---
         # return value for keypoints
         keypoints = None
-        center = (None, None)
         # check which algorithm worked previously
         if 1==1: #(self.__algorithm is None):
             preprocessorImage0 = self.preprocessImage(frameInput=nozzleDetectFrame, algorithm=0)

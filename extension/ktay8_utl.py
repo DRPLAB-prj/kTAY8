@@ -1,4 +1,4 @@
-# kTAMV Utility Functions
+# kTAY8 Utility Functions
 import json, time
 from statistics import mean, stdev
 import logging
@@ -58,7 +58,7 @@ def get_nozzle_position(server_url, reactor):
     ##############################
     # Get nozzle position
     ##############################
-    logging.debug("*** calling ktamv_utl.get_nozzle_position")
+    logging.debug("*** calling ktay8_utl.get_nozzle_position")
     _request_id = None
 
     # First load the server response and check that it is working
@@ -112,12 +112,12 @@ def get_nozzle_position(server_url, reactor):
             continue
         # If nozzles were found, return the position
         elif _response["statuscode"] == 200:
-            logging.debug("*** exiting ktamv_utl.get_nozzle_position")
+            logging.debug("*** exiting ktay8_utl.get_nozzle_position")
             return _response
         # If nozzles were not found, raise exception
         elif _response["statuscode"] == 404:
             raise NozzleNotFoundException(
-                "Server did not find nozzle, found, got statuscode %s: %s. Try Cleaning the nozzle or adjust Z height. Verify with the KTAMV_SIMPLE_NOZZLE_POSITION command."
+                "Server did not find nozzle, found, got statuscode %s: %s. Try Cleaning the nozzle or adjust Z height. Verify with the KTAY8_SIMPLE_NOZZLE_POSITION command."
                 % (str(_response["statuscode"]), str(_response["statusmessage"]))
             )
         else:
@@ -131,7 +131,7 @@ def get_average_mpp(
     mpps: list, space_coordinates: list, camera_coordinates: list, gcmd
 ):
     # send calling to log
-    logging.debug("*** calling ktamv_utl.get_average_mpp")
+    logging.debug("*** calling ktay8_utl.get_average_mpp")
 
     try:
         # Save initial mpps for later comparison
@@ -203,7 +203,7 @@ def get_average_mpp(
             return None
 
         # send exiting to log
-        logging.debug("*** exiting ktamv_utl.get_average_mpp")
+        logging.debug("*** exiting ktay8_utl.get_average_mpp")
 
         return mpp, mpps, space_coordinates, camera_coordinates
     except Exception as e:
@@ -222,8 +222,8 @@ def normalize_coords(coords, frame_width=__FRAME_WIDTH, frame_height=__FRAME_HEI
     returnValue = (coords[0] / xdim - 0.5, coords[1] / ydim - 0.5)
     return returnValue
 
-# kTAMV Printer Manager
-class ktamv_pm:
+# kTAY8 Printer Manager
+class ktay8_pm:
     __defaultSpeed = 3000
 
     def __init__(self, config):
@@ -246,7 +246,7 @@ class ktamv_pm:
 
     def moveRelative(self, X=0, Y=0, Z=0, moveSpeed=__defaultSpeed, protected=False):
         # send calling to log
-        logging.debug("*** calling ktamv_pm.moveRelative")
+        logging.debug("*** calling ktay8_pm.moveRelative")
 
         # Ensure that the printer is homed before continuing
         self.ensureHomed()
@@ -281,7 +281,7 @@ class ktamv_pm:
             raise e.with_traceback(e.__traceback__)
 
         # send exiting to log
-        logging.debug("*** exiting ktamv_pm.moveRelative")
+        logging.debug("*** exiting ktay8_pm.moveRelative")
 
     def moveRelativeToArray(self, pos_array, moveSpeed=__defaultSpeed, protected=False):
         self.moveRelative(

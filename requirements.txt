@@ -1,0 +1,9 @@
+# Dependencies for kTAY8 with YOLO/TFLite support
+numpy
+opencv-python
+# For TFLite support (recommended for Orange Pi)
+# Note: On some ARM systems you might need to install tflite-runtime manually or via system packages
+# tflite-runtime 
+
+# For ONNX support (optional)
+onnxruntime

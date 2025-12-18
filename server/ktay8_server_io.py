@@ -8,15 +8,15 @@ import base64
 _FRAME_WIDTH = 640
 _FRAME_HEIGHT = 480
  
-class Ktamv_Server_Io:
+class Ktay8_Server_Io:
     def __init__(self, log, camera_url, cloud_url, save_image = False):
         self.log = log
-        self.log(' *** initializing Ktamv_Server_Io **** ')
+        self.log(' *** initializing Ktay8_Server_Io **** ')
         self.camera_url = camera_url
         self.save_image = save_image
         self.cloud_url = cloud_url
         self.session = requests.Session()
-        self.log(' *** initialized Ktamv_Server_Io with camera_url = %s, save_image = %s **** ' % (str(camera_url), str(save_image)))
+        self.log(' *** initialized Ktay8_Server_Io with camera_url = %s, save_image = %s **** ' % (str(camera_url), str(save_image)))
         
 
     def can_read_stream(self, printer):

@@ -9,19 +9,19 @@
 set -e
 
 # Get the root path of the repo, aka, where this script is executing
-KTAMV_REPO_DIR=$(realpath $(dirname "$0"))
+KTAY8_REPO_DIR=$(realpath $(dirname "$0"))
 
 # This is the root of where our py virtual env will be.
-KTAMV_ENV="${HOME}/ktamv-env"
+KTAY8_ENV="${HOME}/ktay8-env"
 
 # This is where Klipper is installed
 KLIPPER_HOME="${HOME}/klipper"
 
 # This is where the extension are downloaded to, a subdirectory of the repo.
-EXTENSION_PATH="${KTAMV_REPO_DIR}/extension"
+EXTENSION_PATH="${KTAY8_REPO_DIR}/extension"
 
 # This is where the server is downloaded to, a subdirectory of the repo.
-SERVER_PATH="${KTAMV_REPO_DIR}/server"
+SERVER_PATH="${KTAY8_REPO_DIR}/server"
 
 # This is where Moonraker is installed
 MOONRAKER_HOME="${HOME}/moonraker"
@@ -61,6 +61,14 @@ SEND_IMAGES="false"
 # matplotlib is to find usable fonts
 # requests is used to make HTTP requests, it's used to communicate between the server and the extension
 PKGLIST="python3 python3-pip virtualenv curl python3-matplotlib python3-numpy python3-opencv python3-pil python3-flask libatlas-base-dev python3-waitress python3-jinja2 python3-requests"
+
+# --- PATCH: Install requirements.txt for AI support ---
+if [ -f "${KTAY8_REPO_DIR}/requirements.txt" ]; then
+    log_info "Installing AI dependencies from requirements.txt..."
+    pip3 install -r "${KTAY8_REPO_DIR}/requirements.txt" || log_error "Warning: Failed to install some requirements via pip."
+fi
+# ------------------------------------------------------
+
 
 
 #
@@ -105,19 +113,19 @@ log_blank()
 #
 install_or_update_python_env()
 {
-    log_header "Checking Python Virtual Environment For kTAMV..."
+    log_header "Checking Python Virtual Environment For kTAY8..."
     # If the service is already running, we can't recreate the virtual env
     # so if it exists, don't try to create it.
-    if [ -d $KTAMV_ENV ]; then
-        log_error "Virtual environment found at ${KTAMV_ENV}, skipping creation."
+    if [ -d $KTAY8_ENV ]; then
+        log_error "Virtual environment found at ${KTAY8_ENV}, skipping creation."
         # This virtual env refresh fails on some devices when the service is already running, so skip it for now.
         # This only refreshes the virtual environment package anyways, so it's not super needed.
         #log_info "Virtual environment found, updating to the latest version of python."
-        #python3 -m venv --upgrade "${KTAMV_ENV}"
+        #python3 -m venv --upgrade "${KTAY8_ENV}"
     else
-        log_info "No virtual environment found, creating one now at ${KTAMV_ENV}."
-        mkdir -p "${KTAMV_ENV}"
-        virtualenv -p /usr/bin/python3 --system-site-packages "${KTAMV_ENV}"
+        log_info "No virtual environment found, creating one now at ${KTAY8_ENV}."
+        mkdir -p "${KTAY8_ENV}"
+        virtualenv -p /usr/bin/python3 --system-site-packages "${KTAY8_ENV}"
     fi
 }
 
@@ -156,15 +164,15 @@ install_or_update_system_dependencies()
 #
 
 #
-# Logic to ensure the user isn't trying to use this script to setup in kTAMV.
+# Logic to ensure the user isn't trying to use this script to setup in kTAY8.
 #
-check_for_ktamv()
+check_for_ktay8()
 {
     # Do a basic check to see if anything is running on the specified port.
     if curl -s "http://127.0.0.1:${PORT}" >/dev/null ; then
-        log_important "Just a second... kTAMV or something else was detected running on port ${PORT}."
+        log_important "Just a second... kTAY8 or something else was detected running on port ${PORT}."
         log_blank
-        log_important "This install script is used to install kTAMV for Mainsail, Fluidd, Moonraker, etc."
+        log_important "This install script is used to install kTAY8 for Mainsail, Fluidd, Moonraker, etc."
         log_blank
         log_blank
         log_info "Stopping install process."
@@ -193,8 +201,8 @@ link_extension()
 {
     log_header "Linking extension to Klipper..."
     log_blank
-    ln -sf "${EXTENSION_PATH}/ktamv.py" "${KLIPPER_HOME}/klippy/extras/ktamv.py"
-    ln -sf "${EXTENSION_PATH}/ktamv_utl.py" "${KLIPPER_HOME}/klippy/extras/ktamv_utl.py"
+    ln -sf "${EXTENSION_PATH}/ktay8.py" "${KLIPPER_HOME}/klippy/extras/ktay8.py"
+    ln -sf "${EXTENSION_PATH}/ktay8_utl.py" "${KLIPPER_HOME}/klippy/extras/ktay8_utl.py"
 }
 
 # 
@@ -260,19 +268,19 @@ install_update_manager() {
         next_dest="$(nextfilename "$dest")"
         log_info "Copying original moonraker.conf file to ${next_dest}"
         cp ${dest} ${next_dest}
-        already_included=$(grep -c '\[update_manager ktamv\]' ${dest} || true)
+        already_included=$(grep -c '\[update_manager ktay8\]' ${dest} || true)
         if [ "${already_included}" -eq 0 ]; then
             echo "" >> "${dest}"    # Add a blank line
             echo "" >> "${dest}"    # Add a blank line
-            echo -e "[update_manager ktamv]]" >> "${dest}"    # Add the section header
+            echo -e "[update_manager ktay8]" >> "${dest}"    # Add the section header
             echo -e "type: git_repo" >> "${dest}"
-            echo -e "path: ~/kTAMV" >> "${dest}"
-            echo -e "origin: https://github.com/TypQxQ/kTAMV.git" >> "${dest}"
+            echo -e "path: ~/kTAY8" >> "${dest}"
+            echo -e "origin: https://github.com/DRPLAB-prj/kTAY8.git" >> "${dest}"
             echo -e "primary_branch: main" >> "${dest}"
             echo -e "install_script: install.sh" >> "${dest}"
             echo -e "managed_services: klipper" >> "${dest}"
         else
-            log_error "[update_manager ktamv] already exists in moonraker.conf - skipping installing it there"
+            log_error "[update_manager ktay8] already exists in moonraker.conf - skipping installing it there"
         fi
 
     else
@@ -296,40 +304,40 @@ install_klipper_config() {
 
         # Add the configuration to printer.cfg
         # This example assumes that that both the server and the webcam stream are running on the same machine as Klipper
-        already_included=$(grep -c '\[ktamv\]' ${dest} || true)
+        already_included=$(grep -c '\[ktay8\]' ${dest} || true)
         if [ "${already_included}" -eq 0 ]; then
             echo "" >> "${dest}"    # Add a blank line
             echo "" >> "${dest}"    # Add a blank line
-            echo -e "[ktamv]" >> "${dest}"    # Add the section header
+            echo -e "[ktay8]" >> "${dest}"    # Add the section header
             echo -e "nozzle_cam_url: http://localhost/webcam/snapshot?max_delay=0" >> "${dest}"   # Add the address of the webcam stream that will be accessed by the server
-            echo -e "server_url: http://localhost:${PORT}" >> "${dest}"    # Add the address of the kTAMV server that will be accessed Klipper
+            echo -e "server_url: http://localhost:${PORT}" >> "${dest}"    # Add the address of the kTAY8 server that will be accessed Klipper
             echo -e "move_speed: 1800" >> "${dest}"   # Add the speed at which the toolhead moves when aligning
             echo -e "send_frame_to_cloud: ${SEND_IMAGES}" >> "${dest}"   # If true, the images of the nozzle will be sent to the developer
             echo -e "detection_tolerance: 0" >> "${dest}"   # number of pixels to have as tolerance when detecting the nozzle.
 
-            log_info "Added kTAMV configuration to printer.cfg"
+            log_info "Added kTAY8 configuration to printer.cfg"
             log_important "Please check the configuration in printer.cfg and adjust it as needed"
         else
-            log_error "[ktamv] already exists in printer.cfg - skipping adding it there"
+            log_error "[ktay8] already exists in printer.cfg - skipping adding it there"
         fi
     else
-        log_error "File printer.cfg file not found! Cannot add kTAMV configuration. Do it manually."
+        log_error "File printer.cfg file not found! Cannot add kTAY8 configuration. Do it manually."
     fi
 
     # Add the inclusion of macros.cfg to printer.cfg if it doesn't exist
-    already_included=$(grep -c '\[include ktamv_macros.cfg\]' ${dest} || true)
+    already_included=$(grep -c '\[include ktay8_macros.cfg\]' ${dest} || true)
     if [ "${already_included}" -eq 0 ]; then
         echo "" >> "${dest}"    # Add a blank line
-        echo -e "[include ktamv-macros.cfg]" >> "${dest}"    # Add the section header
+        echo -e "[include ktay8-macros.cfg]" >> "${dest}"    # Add the section header
     else
-        log_error "[include ktamv-macros.cfg] already exists in printer.cfg - skipping adding it there"
+        log_error "[include ktay8-macros.cfg] already exists in printer.cfg - skipping adding it there"
     fi
     
-    if [ ! -f "${KLIPPER_CONFIG_HOME}/ktamv-macros.cfg" ]; then
-        log_info "Copying ktamv-macros.cfg to ${KLIPPER_CONFIG_HOME}"
-        cp ${KTAMV_REPO_DIR}/ktamv-macros.cfg ${KLIPPER_CONFIG_HOME}
+    if [ ! -f "${KLIPPER_CONFIG_HOME}/ktay8-macros.cfg" ]; then
+        log_info "Copying ktay8-macros.cfg to ${KLIPPER_CONFIG_HOME}"
+        cp ${KTAY8_REPO_DIR}/ktay8-macros.cfg ${KLIPPER_CONFIG_HOME}
     else
-        log_error "[include ktamv-macros.cfg] already exists in printer.cfg - skipping adding it there"
+        log_error "[include ktay8-macros.cfg] already exists in printer.cfg - skipping adding it there"
     fi
     # Restart Klipper
     restart_klipper
@@ -337,23 +345,23 @@ install_klipper_config() {
 }
 
 # 
-# Logic to install kTAMV as a systemd service
+# Logic to install kTAY8 as a systemd service
 # 
 install_sysd(){
     log_header "Installing system start script so the server can start from Moonrker..."
 
     # Comand to launch the server to be used in the service file
-    LAUNCH_CMD="${KTAMV_ENV}/bin/python ${KTAMV_REPO_DIR}/server/ktamv_server.py --port ${PORT}"
+    LAUNCH_CMD="${KTAY8_ENV}/bin/python ${KTAY8_REPO_DIR}/server/ktay8_server.py --port ${PORT}"
 
     # Create systemd service file
-    SERVICE_FILE="${SYSTEMDDIR}/kTAMV_server.service"
+    SERVICE_FILE="${SYSTEMDDIR}/kTAY8_server.service"
 
     # If the service file already exists, don't overwrite
     [ -f $SERVICE_FILE ] && return
     sudo /bin/sh -c "cat > ${SERVICE_FILE}" << EOF
-#Systemd service file for kTAMV_server
+#Systemd service file for kTAY8_server
 [Unit]
-Description=Server component for kTAMV. A tool alignment tool for Klipper using machine vision.
+Description=Server component for kTAY8. A tool alignment tool for Klipper using machine vision.
 After=network-online.target moonraker.service
 
 [Install]
@@ -362,19 +370,19 @@ WantedBy=multi-user.target
 [Service]
 Type=simple
 User=$USER
-WorkingDirectory=$KTAMV_REPO_DIR/server
+WorkingDirectory=$KTAY8_REPO_DIR/server
 ExecStart=$LAUNCH_CMD
 Restart=always
 RestartSec=10
 EOF
     # Use systemctl to enable the klipper systemd service script
-        sudo systemctl enable kTAMV_server.service
+        sudo systemctl enable kTAY8_server.service
         sudo systemctl daemon-reload
 
         # Start the server
         start_server
 
-        # Add kTAMV to the service list of Moonraker
+        # Add kTAY8 to the service list of Moonraker
         add_to_asvc
 
         # Restart Moonraker
@@ -383,23 +391,23 @@ EOF
 
 add_to_asvc()
 {
-    log_header "Trying to add kTAMV_server to service list"
+    log_header "Trying to add kTAY8_server to service list"
     if [ -f $MOONRAKER_ASVC ]; then
         log_info "moonraker.asvc was found"
-        if ! grep -q kTAMV_server $MOONRAKER_ASVC; then
-            log_info "moonraker.asvc does not contain 'kTAMV_server'! Adding it..."
+        if ! grep -q kTAY8_server $MOONRAKER_ASVC; then
+            log_info "moonraker.asvc does not contain 'kTAY8_server'! Adding it..."
             echo "" >> $MOONRAKER_ASVC    # Add a blank line
-            echo -e "kTAMV_server" >> $MOONRAKER_ASVC
+            echo -e "kTAY8_server" >> $MOONRAKER_ASVC
         fi
     else
-        log_error "moonraker.asvc not found! Add 'kTAMV_server' to the service list manually"
+        log_error "moonraker.asvc not found! Add 'kTAY8_server' to the service list manually"
     fi
 }
 
 start_server()
 {
-    log_header "Launching kTAMV Server..."
-    sudo systemctl restart kTAMV_server
+    log_header "Launching kTAY8 Server..."
+    sudo systemctl restart kTAY8_server
 }
 
 
@@ -458,17 +466,17 @@ log_blank
 log_blank
 log_blank
 log_blank
-log_header "                     kTAMV"
+log_header "                     kTAY8"
 log_header "   Klipper Tool Alignment (using) Machine Vision"
 log_blank
 log_blank
-log_important "kTAMV is used to align your printer's toolheads using machine vision."
+log_important "kTAY8 is used to align your printer's toolheads using machine vision."
 log_blank
 log_info "Usage: $0 [-p <server_port>] [-k <klipper_home_dir>] [-c <klipper_config_dir>]"
 log_info "[-m <moonraker_home_dir>] [-s <system_dir>]"
 log_blank
 log_blank
-log_important "This script will install the kTAMV client to Klipper and the kTAMV server as a service on port ${PORT}."
+log_important "This script will install the kTAY8 client to Klipper and the kTAY8 server as a service on port ${PORT}."
 log_important "It will update Rasberry Pi OS and install all required packages."
 log_important "It will add the base configuration in printer.cfg and moonraker.conf."
 log_blank
@@ -478,7 +486,7 @@ case $yn in
     y)
         ;;
     n)
-        log_info "You can run this script again later to install kTAMV."
+        log_info "You can run this script again later to install kTAY8."
         log_blank
     exit 0
         ;;
@@ -497,11 +505,11 @@ log_blank
 log_blank
 log_blank
 log_blank
-log_header "                     kTAMV"
+log_header "                     kTAY8"
 log_header "   Klipper Tool Alignment (using) Machine Vision"
 log_blank
 log_blank
-log_important "Do you want to contribute to the development of kTAMV?"
+log_important "Do you want to contribute to the development of kTAY8?"
 log_info "I would love if you would like to share the images of the nozzle and obtained results taken when finding the nozzle."
 log_info "I plan to use it to improve the algorithm and maybe train an AI as the next step."
 log_info "You can change this setting later in printer.cfg."
@@ -551,8 +559,8 @@ verify_ready
 # These are required for other actions in this script, so it must be done first.
 install_or_update_system_dependencies
 
-# Check that kTAMV isn't found.
-check_for_ktamv
+# Check that kTAY8 isn't found.
+check_for_ktay8
 
 # Check that Klipper is installed
 check_klipper
@@ -569,7 +577,7 @@ link_extension
 # Install the update manager to Moonraker
 install_update_manager
 
-# Install kTAMV as a systemd service and then add it to the service list moonraker.asvc
+# Install kTAY8 as a systemd service and then add it to the service list moonraker.asvc
 install_sysd
 
 # Install the configuration to Klipper
@@ -577,4 +585,4 @@ install_klipper_config
 
 log_blank
 log_blank
-log_important "kTAMV is now installed. Settings can be found in the printer.cfg file."
+log_important "kTAY8 is now installed. Settings can be found in the printer.cfg file."

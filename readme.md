@@ -1,24 +1,24 @@
 <p align="center">
-  <h1 align="center">kTAMV - Klipper Tool Alignment (using) Machine Vision</h1>
+  <h1 align="center">kTAY8 - Klipper Tool Alignment (using) Machine Vision</h1>
   <img src="doc/mainsail_main.jpg?raw=true" alt='screenshot of UI' width='800'>
 </p>
 
 This allows X and Y allignment betwween multiple tools on a 3D printer using a camera that points up towards the nozzle from inside [Klipper](https://github.com/Klipper3d/klipper).
 <p align="center">
-  <a aria-label="Downloads" href="https://github.com/TypQxQ/kTAMV/releases">
-    <img src="https://img.shields.io/github/release/TypQxQ/kTAMV?display_name=tag&style=flat-square">
+  <a aria-label="Downloads" href="https://github.com/TypQxQ/kTAY8/releases">
+    <img src="https://img.shields.io/github/release/TypQxQ/kTAY8?display_name=tag&style=flat-square">
   </a>
-  <a aria-label="Stars" href="https://github.com/TypQxQ/kTAMV/stargazers">
-    <img src="https://img.shields.io/github/stars/TypQxQ/kTAMV?style=flat-square">
+  <a aria-label="Stars" href="https://github.com/TypQxQ/kTAY8/stargazers">
+    <img src="https://img.shields.io/github/stars/TypQxQ/kTAY8?style=flat-square">
   </a>
-  <a aria-label="Forks" href="https://github.com/TypQxQ/kTAMV/network/members">
-    <img src="https://img.shields.io/github/forks/TypQxQ/kTAMV?style=flat-square">
+  <a aria-label="Forks" href="https://github.com/TypQxQ/kTAY8/network/members">
+    <img src="https://img.shields.io/github/forks/TypQxQ/kTAY8?style=flat-square">
   </a>
-  <a aria-label="License" href="https://github.com/TypQxQ/kTAMV/blob/master/LICENSE">
-    <img src="https://img.shields.io/github/license/TypQxQ/kTAMV?style=flat-square">
+  <a aria-label="License" href="https://github.com/TypQxQ/kTAY8/blob/master/LICENSE">
+    <img src="https://img.shields.io/github/license/TypQxQ/kTAY8?style=flat-square">
   </a>
-    <a aria-label="License" href="https://github.com/TypQxQ/kTAMV/blob/master/LICENSE">
-    <img src="https://img.shields.io/github/license/TypQxQ/kTAMV?style=flat-square">
+    <a aria-label="License" href="https://github.com/TypQxQ/kTAY8/blob/master/LICENSE">
+    <img src="https://img.shields.io/github/license/TypQxQ/kTAY8?style=flat-square">
   </a>
   <a href="https://universe.roboflow.com/nozzle-detection/nozzle-detection-bdk8s">
     <img src="https://app.roboflow.com/images/download-dataset-badge.svg"></img>
@@ -32,14 +32,14 @@ It has one part that runs as a part of Klipper, adding the necesary commands and
 
 It adds the following commands to klipper:
 
-- `KTAMV_CALIB_CAMERA`, moves the toolhead around the current position for camera-movement data
-- `KTAMV_FIND_NOZZLE_CENTER`, detects the nozzle in the current nozzle cam image and attempts to move it to the center of the image.
-- `KTAMV_SET_ORIGIN`, sets the current X,Y position as origin to use for calibrating from.
-- `KTAMV_GET_OFFSET`, Get the offset from the current X,Y position to the origin X,Y position. Prints it to console.
-- `KTAMV_MOVE_TO_ORIGIN`, moves the toolhead to the configured center position origin as set with KTAMV_SET_ORIGIN
-- `KTAMV_SIMPLE_NOZZLE_POSITION`, checks if a nozzle is detected in the current nozzle cam image and reports whether it is found. The printer will not move.
-- `KTAMV_START_PREVIEW`, starts the camera preview mode.
-- `KTAMV_STOP_PREVIEW`, stops the camera preview mode.
+- `KTAY8_CALIB_CAMERA`, moves the toolhead around the current position for camera-movement data
+- `KTAY8_FIND_NOZZLE_CENTER`, detects the nozzle in the current nozzle cam image and attempts to move it to the center of the image.
+- `KTAY8_SET_ORIGIN`, sets the current X,Y position as origin to use for calibrating from.
+- `KTAY8_GET_OFFSET`, Get the offset from the current X,Y position to the origin X,Y position. Prints it to console.
+- `KTAY8_MOVE_TO_ORIGIN`, moves the toolhead to the configured center position origin as set with KTAY8_SET_ORIGIN
+- `KTAY8_SIMPLE_NOZZLE_POSITION`, checks if a nozzle is detected in the current nozzle cam image and reports whether it is found. The printer will not move.
+- `KTAY8_START_PREVIEW`, starts the camera preview mode.
+- `KTAY8_STOP_PREVIEW`, stops the camera preview mode.
 
 !!! !!! !!! !!! !!!
 This software is only meant for advanced users!
@@ -53,7 +53,7 @@ be ready to hit 'emergency stop' at any time!
 Connect to your klipper machine using SSH, run these command
 
 ```bash
-cd ~/ && git clone https://github.com/TypQxQ/kTAMV.git && bash ~/kTAMV/install.sh
+cd ~/ && git clone https://github.com/TypQxQ/kTAY8.git && bash ~/kTAY8/install.sh
 ```
 
 This will install and configure everything.
@@ -61,7 +61,7 @@ This will install and configure everything.
 ## Configuration
 The installation script will add a section to printer.cfg that looks like the following:
 ```yml
-[ktamv]
+[ktay8]
 nozzle_cam_url: http://localhost/webcam2/snapshot?max_delay=0
 server_url: http://localhost:8085
 move_speed: 1800
@@ -92,28 +92,28 @@ Add a webcam and configure it like in the image:
 - Target FPS: 4 is enough, will ask the server for a new frame 4 times a second.
 Use the printer IP and not localhost or Mainsail will try to connect to the computer you run the webbrowser on.
 
-<img src="doc/mainsail-ktamv-cam-settings-example.jpg" width="689">
+<img src="doc/mainsail-ktay8-cam-settings-example.jpg" width="689">
 
 
 ----
 ## How to run
 
-1. Run the `KTAMV_SEND_SERVER_CFG` command to configure the server.
-2. Home the printer and move the endstop or nozzle over the camera so that it is aproximatley in the middle of the image. You can run the `KTAMV_START_PREVIEW` command to help you orientate.
-2. Run the `KTAMV_CALIB_CAMERA` command to detect the nozzle or endstop. Note that it can have problems with endstops and it's easier to calibrate using a nozzle.
-3. If successfull, run the `KTAMV_FIND_NOZZLE_CENTER` command to center the nozzle or endstop.
-4. Run the `KTAMV_SET_ORIGIN` command to set this as the origin for all other offsets. If a tool is selected, this should not have any XY offsets applied.
-5. Change to another tool and move the nozzle over the camera so that it is aproximatley in the middle of the image. You can run the `KTAMV_START_PREVIEW` command to help you orientate.
-6. Run the `KTAMV_FIND_NOZZLE_CENTER` command to center the nozzle.
-7. Run the `KTAMV_GET_OFFSET` to get the offset from when the first tool or nozzle was in the middle of the image.
+1. Run the `KTAY8_SEND_SERVER_CFG` command to configure the server.
+2. Home the printer and move the endstop or nozzle over the camera so that it is aproximatley in the middle of the image. You can run the `KTAY8_START_PREVIEW` command to help you orientate.
+2. Run the `KTAY8_CALIB_CAMERA` command to detect the nozzle or endstop. Note that it can have problems with endstops and it's easier to calibrate using a nozzle.
+3. If successfull, run the `KTAY8_FIND_NOZZLE_CENTER` command to center the nozzle or endstop.
+4. Run the `KTAY8_SET_ORIGIN` command to set this as the origin for all other offsets. If a tool is selected, this should not have any XY offsets applied.
+5. Change to another tool and move the nozzle over the camera so that it is aproximatley in the middle of the image. You can run the `KTAY8_START_PREVIEW` command to help you orientate.
+6. Run the `KTAY8_FIND_NOZZLE_CENTER` command to center the nozzle.
+7. Run the `KTAY8_GET_OFFSET` to get the offset from when the first tool or nozzle was in the middle of the image.
 8. Run step 5 - 7 for every tool to get their offset.
 
 ## Can it be automated?
 Of course! And here is a macro you can use as a start point:
-[ktamv_automation_example.cfg](ktamv_automation_example.cfg)
+[ktay8_automation_example.cfg](ktay8_automation_example.cfg)
 
 ## Debug logs
-The kTAMV server logs in memory and everything can be displayed on it's root path.
+The kTAY8 server logs in memory and everything can be displayed on it's root path.
 `http://my_printer_ip_address:8085/`
 
 The Client part logs to regular Klipper logs.

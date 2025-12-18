@@ -7,11 +7,11 @@ import matplotlib.font_manager as fm
 from waitress import serve
 import logging, json, traceback
 from dataclasses import dataclass, field
-from ktamv_server_dm import Ktamv_Server_Detection_Manager as dm
+from ktay8_server_dm import Ktay8_Server_Detection_Manager as dm
 
 __logdebug = ""
 # URL to the cloud server
-__CLOUD_URL = "http://ktamv.ignat.se/index.php"
+__CLOUD_URL = "http://ktay8.ignat.se/index.php"
 # If no nozzle found in this time, timeout the function
 __CV_TIMEOUT = 20  
 # Minimum amount of matches to confirm toolhead position after a move
@@ -40,7 +40,7 @@ logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s %(levelname)-8s %(message)s",
     datefmt="%a, %d %b %Y %H:%M:%S",
-    filename="logs/ktamv_server.log",
+    filename="logs/ktay8_server.log",
     filemode="w",
     encoding="utf-8",
 )
@@ -66,7 +66,7 @@ _transformMatrix = None
 
 
 @dataclass
-class Ktamv_Request_Result:
+class Ktay8_Request_Result:
     request_id: int
     data: str # As JSON encoded string
     runtime: float = None
@@ -213,8 +213,8 @@ def getAllReqests():
 
 @app.route("/")
 def index():
-    file_path = "logs/ktamv_server.log"
-    content = "<H1>kTAMV Server is running</H1><br><b>Log file:</b><br>"
+    file_path = "logs/ktay8_server.log"
+    content = "<H1>kTAY8 Server is running</H1><br><b>Log file:</b><br>"
     content += (
         "Frame width: "
         + str(_FRAME_WIDTH)
@@ -248,7 +248,7 @@ def getReqest():
             return jsonify(request_results[request_id])
         except KeyError:
             return jsonify(
-                Ktamv_Request_Result(
+                Ktay8_Request_Result(
                     request_id, None, None, 404, "Request not found"
                 )
             )
@@ -271,14 +271,14 @@ def getNozzlePosition():
         request_id = random.randint(0, 1000000)
 
         if _camera_url is None:
-            request_results[request_id] = Ktamv_Request_Result(
+            request_results[request_id] = Ktay8_Request_Result(
                 request_id, None, time.time() - start_time, 502, "Camera URL not set"
             )
             log("*** end of getNozzlePosition - Camera URL not set ***<br>")
             return jsonify(request_results[request_id])
 
 
-        request_results[request_id] = Ktamv_Request_Result(
+        request_results[request_id] = Ktay8_Request_Result(
             request_id, None, None, 202, "Accepted"
         )
         log("request_results: " + str(request_results))
@@ -296,12 +296,12 @@ def getNozzlePosition():
             log("position: " + str(position))
 
             if position is None:
-                request_result_object = Ktamv_Request_Result(
+                request_result_object = Ktay8_Request_Result(
                     request_id, None, time.time() - start_time, 404, "No nozzle found"
                 )
                 show_error_message_to_image("Error: No nozzle found.")
             else:
-                request_result_object = Ktamv_Request_Result(
+                request_result_object = Ktay8_Request_Result(
                     request_id,
                     json.dumps(position),
                     time.time() - start_time,
@@ -426,7 +426,7 @@ def drawOnFrame(usedFrame):
     )
     
     if _camera_url is None:
-        usedFrame = drawTextOnFrame(usedFrame, "kTAMV Server Configuration not recieved.", row=2)
+        usedFrame = drawTextOnFrame(usedFrame, "kTAY8 Server Configuration not recieved.", row=2)
     elif __processed_frame_as_image is None:
         usedFrame = drawTextOnFrame(usedFrame, "No image recieved since start.", row=2)
     elif _transformMatrix is None:

@@ -1,12 +1,12 @@
 from math import sqrt
-from . import ktamv_utl as utl
-from .ktamv_utl import NozzleNotFoundException
+from . import ktay8_utl as utl
+from .ktay8_utl import NozzleNotFoundException
 import logging
 import json
 
 
 
-class ktamv:
+class ktay8:
     __FRAME_WIDTH = 640
     __FRAME_HEIGHT = 480
 
@@ -46,40 +46,40 @@ class ktamv:
 
     def handle_ready(self):
         self.reactor = self.printer.get_reactor()
-        self.pm = utl.ktamv_pm(self.config)  # Printer Manager
+        self.pm = utl.ktay8_pm(self.config)  # Printer Manager
         self.gcode.register_command(
-            "KTAMV_CALIB_CAMERA",
-            self.cmd_KTAMV_CALIB_CAMERA,
-            desc=self.cmd_KTAMV_CALIB_CAMERA_help,
+            "KTAY8_CALIB_CAMERA",
+            self.cmd_KTAY8_CALIB_CAMERA,
+            desc=self.cmd_KTAY8_CALIB_CAMERA_help,
         )
         self.gcode.register_command(
-            "KTAMV_FIND_NOZZLE_CENTER",
+            "KTAY8_FIND_NOZZLE_CENTER",
             self.cmd_FIND_NOZZLE_CENTER,
             desc=self.cmd_FIND_NOZZLE_CENTER_help,
         )
         self.gcode.register_command(
-            "KTAMV_SET_ORIGIN", self.cmd_SET_CENTER, desc=self.cmd_SET_CENTER_help
+            "KTAY8_SET_ORIGIN", self.cmd_SET_CENTER, desc=self.cmd_SET_CENTER_help
         )
         self.gcode.register_command(
-            "KTAMV_GET_OFFSET", self.cmd_GET_OFFSET, desc=self.cmd_GET_OFFSET_help
+            "KTAY8_GET_OFFSET", self.cmd_GET_OFFSET, desc=self.cmd_GET_OFFSET_help
         )
         self.gcode.register_command(
-            "KTAMV_SIMPLE_NOZZLE_POSITION",
+            "KTAY8_SIMPLE_NOZZLE_POSITION",
             self.cmd_SIMPLE_NOZZLE_POSITION,
             desc=self.cmd_SIMPLE_NOZZLE_POSITION_help,
         )
         self.gcode.register_command(
-            "KTAMV_SEND_SERVER_CFG",
+            "KTAY8_SEND_SERVER_CFG",
             self.cmd_SEND_SERVER_CFG,
             desc=self.cmd_SEND_SERVER_CFG_help,
         )
         self.gcode.register_command(
-            "KTAMV_START_PREVIEW",
+            "KTAY8_START_PREVIEW",
             self.cmd_START_PREVIEW,
             desc=self.cmd_START_PREVIEW_help,
         )
         self.gcode.register_command(
-            "KTAMV_STOP_PREVIEW",
+            "KTAY8_STOP_PREVIEW",
             self.cmd_STOP_PREVIEW,
             desc=self.cmd_STOP_PREVIEW_help,
         )
@@ -105,7 +105,7 @@ class ktamv:
                 "/preview",
                 action=action
             )
-            gcmd.respond_info("kTAMV Server response: %s" % str(rr))
+            gcmd.respond_info("kTAY8 Server response: %s" % str(rr))
         except Exception as e:
             raise self.gcode.error(
                 "Failed to send server configuration to server, got error: %s" % str(e)
@@ -126,7 +126,7 @@ class ktamv:
                 detection_tolerance=self.detection_tolerance,
             )
             # gcmd.respond_info("Sent server configuration to server")
-            gcmd.respond_info("kTAMV Server response: %s" % str(rr))
+            gcmd.respond_info("kTAY8 Server response: %s" % str(rr))
         except Exception as e:
             raise self.gcode.error(
                 "Failed to send server configuration to server, got error: %s" % str(e)
@@ -149,7 +149,7 @@ class ktamv:
     def cmd_GET_OFFSET(self, gcmd):
         if self.cp is None:
             raise self.gcode.error(
-                "No center position set, use KTAMV_SET_CENTER to set it to the"
+                "No center position set, use KTAY8_SET_CENTER to set it to the"
                 + " position you want to get offset from"
             )
             return
@@ -182,7 +182,7 @@ class ktamv:
         ##############################
         # Get nozzle position
         ##############################
-        logging.debug("*** calling KTAMV_SIMPLE_NOZZLE_POSITION")
+        logging.debug("*** calling KTAY8_SIMPLE_NOZZLE_POSITION")
         try:
             _response = utl.get_nozzle_position(self.server_url, self.reactor)
             if _response is None:
@@ -197,12 +197,12 @@ class ktamv:
                 "Failed to run burstNozzleDetection, got error: %s" % str(e)
             )
 
-    cmd_KTAMV_CALIB_CAMERA_help = (
+    cmd_KTAY8_CALIB_CAMERA_help = (
         "Calibrates the movement of the active nozzle"
         + " around the point it started at"
     )
 
-    def cmd_KTAMV_CALIB_CAMERA(self, gcmd):
+    def cmd_KTAY8_CALIB_CAMERA(self, gcmd):
         self.gcode.respond_info("Starting mm/px calibration")
         self._calibrate_px_mm(gcmd)
 
@@ -210,7 +210,7 @@ class ktamv:
         ##############################
         # Calibration of the camera
         ##############################
-        logging.debug("*** calling ktamv.getDistance")
+        logging.debug("*** calling ktay8.getDistance")
         self.space_coordinates = []
         self.camera_coordinates = []
         self.mm_per_pixels = []
@@ -384,7 +384,7 @@ class ktamv:
             # Indicate that we have calibrated the camera
             self.is_calibrated = True
 
-            logging.debug("*** exiting ktamv.getDistance")
+            logging.debug("*** exiting ktay8.getDistance")
 
         except Exception as e:
             raise self.gcode.error(
@@ -395,7 +395,7 @@ class ktamv:
         ##############################
         # Calibration of the tool
         ##############################
-        logging.debug("*** calling ktamv._calibrate_Tool")
+        logging.debug("*** calling ktay8._calibrate_Tool")
         _retries = 0
         _not_found_retries = 0
         _uv = [None, None]  # 2D coordinates of where the nozzle is on the camera image
@@ -550,7 +550,7 @@ class ktamv:
     def getMMperPixel(
         self, distance_traveled=[], from_camera_point=[], to_camera_point=[]
     ):
-        logging.debug("*** calling ktamv.getMMperPixel")
+        logging.debug("*** calling ktay8.getMMperPixel")
         logging.debug("distance_traveled: %s" % str(distance_traveled))
         logging.debug("from_camera_point: %s" % str(from_camera_point))
         logging.debug("to_camera_point: %s" % str(to_camera_point))
@@ -567,7 +567,7 @@ class ktamv:
             3,
         )
         logging.debug("mm per pixel: %s" % str(mpp))
-        logging.debug("*** exiting ktamv.getMMperPixel")
+        logging.debug("*** exiting ktay8.getMMperPixel")
         return mpp
 
     def move_relative_and_get_nozzle_position(self, X, Y, gcmd):
@@ -593,7 +593,7 @@ class ktamv:
         self.mm_per_pixels.append(mpp)
 
     def _get_average_mpp_from_lists(self, gcmd):
-        logging.debug("*** calling ktamv._get_average_mpp_from_lists")
+        logging.debug("*** calling ktay8._get_average_mpp_from_lists")
         try:
             (
                 mpp,
@@ -619,7 +619,7 @@ class ktamv:
             self.space_coordinates = new_space_coordinates
             self.camera_coordinates = new_camera_coordinates
 
-            logging.debug("*** exiting ktamv._get_average_mpp_from_lists")
+            logging.debug("*** exiting ktay8._get_average_mpp_from_lists")
             return mpp
         except Exception as e:
             raise self.gcode.error(
@@ -627,7 +627,7 @@ class ktamv:
             ).with_traceback(e.__traceback__)
 
     def getDistance(self, x1, y1, x0, y0):
-        logging.debug("*** calling ktamv.getDistance")
+        logging.debug("*** calling ktay8.getDistance")
         x1_float = float(x1)
         x0_float = float(x0)
         y1_float = float(y1)
@@ -636,7 +636,7 @@ class ktamv:
         y_dist = (y1_float - y0_float) ** 2
         retVal = sqrt((x_dist + y_dist))
         returnVal = round(retVal, 3)
-        logging.debug("*** exiting ktamv.getDistance")
+        logging.debug("*** exiting ktay8.getDistance")
         return returnVal
 
     def get_status(self, eventtime=None):
@@ -653,4 +653,4 @@ class ktamv:
 
 
 def load_config(config):
-    return ktamv(config)
+    return ktay8(config)
