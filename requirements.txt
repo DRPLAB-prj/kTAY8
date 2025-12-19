@@ -1,9 +1,17 @@
-# Dependencies for kTAY8 with YOLO/TFLite support
+# Core dependencies for kTAY8 Server
+flask
+waitress
+Pillow
 numpy
 opencv-python
-# For TFLite support (recommended for Orange Pi)
-# Note: On some ARM systems you might need to install tflite-runtime manually or via system packages
-# tflite-runtime 
+requests
+matplotlib
 
-# For ONNX support (optional)
+# AI / Inference Dependencies
+# For ONNX support (Recommended fallback)
 onnxruntime
+
+# For TFLite support (Recommended for Orange Pi / ARM)
+# Note: On some ARM systems (like Orange Pi), it is better to install tflite-runtime 
+# via system packages or specific wheels to avoid building from source.
+# tflite-runtime

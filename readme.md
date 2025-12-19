@@ -1,157 +1,187 @@
+# 🦅 kTAY8 - AI-Driven Tool Alignment System
+
+**kTAY8** is an advanced tool alignment system for Klipper firmware, leveraging **Deep Learning** and **Computer Vision** to automatically detect and center the 3D printer nozzle relative to a fixed upward-facing camera.
+
+Unlike traditional systems based on **Blob Detection** or simple thresholding (which require high contrast, clean nozzles, and specific lighting), **kTAY8 employs a YOLOv8 Convolutional Neural Network (CNN)** specifically trained to perform robust object detection in challenging environments.
+
 <p align="center">
-  <h1 align="center">kTAY8 - Klipper Tool Alignment (using) Machine Vision</h1>
-  <img src="doc/mainsail_main.jpg?raw=true" alt='screenshot of UI' width='800'>
+  <img src="doc/mainsail_main.jpg" alt="kTAY8 UI Integration" width="800">
 </p>
 
-This allows X and Y allignment betwween multiple tools on a 3D printer using a camera that points up towards the nozzle from inside [Klipper](https://github.com/Klipper3d/klipper).
+---
+
+## 🙏 Acknowledgments & Credits
+
+This project is an **evolutionary fork** of [kTAMV (Klipper Tool Alignment Machine Vision)](https://github.com/TypQxQ/kTAMV).
+Special thanks to:
+*   **TypQxQ**: The original author of kTAMV, who architected the server infrastructure and Klipper integration that serves as the backbone for this project.
+*   **Roboflow Universe Contributors**: For the initial dataset that bootstrapped the training process.
+
+---
+
+## 🧠 The AI Core: YOLOv8 Inference
+
+The core of kTAY8 is a **YOLOv8n (Nano)** model, optimized and exported to **ONNX/TFLite** for edge inference on ARM-based SBCs (Single Board Computers) like Raspberry Pi and Orange Pi.
+
+### Why AI?
+Standard CV algorithms (e.g., OpenCV SimpleBlobDetector) fail when:
+*   **Occlusion/Noise:** The nozzle is covered in filament debris.
+*   **Lighting Variance:** Specular reflections on the build plate or nozzle surface.
+*   **Background Complexity:** Non-uniform backgrounds confuse thresholding algorithms.
+
+**kTAY8's Neural Network** abstracts these features, learning the semantic representation of a "nozzle" regardless of surface conditions.
+
+> **⚠️ Model Status: Alpha Release (v1)**
+> The current model included (`server/best.onnx`) is an **initial release**. While it performs well in tested environments, it may require further generalization for different camera sensors or lighting setups.
+
+---
+
+## 📊 Model Performance & Validation
+
+The following metrics demonstrate the model's performance on the validation dataset (unseen data).
+
+### 1. Detection Accuracy (Confusion Matrix)
 <p align="center">
-  <a aria-label="Downloads" href="https://github.com/TypQxQ/kTAY8/releases">
-    <img src="https://img.shields.io/github/release/TypQxQ/kTAY8?display_name=tag&style=flat-square">
-  </a>
-  <a aria-label="Stars" href="https://github.com/TypQxQ/kTAY8/stargazers">
-    <img src="https://img.shields.io/github/stars/TypQxQ/kTAY8?style=flat-square">
-  </a>
-  <a aria-label="Forks" href="https://github.com/TypQxQ/kTAY8/network/members">
-    <img src="https://img.shields.io/github/forks/TypQxQ/kTAY8?style=flat-square">
-  </a>
-  <a aria-label="License" href="https://github.com/TypQxQ/kTAY8/blob/master/LICENSE">
-    <img src="https://img.shields.io/github/license/TypQxQ/kTAY8?style=flat-square">
-  </a>
-    <a aria-label="License" href="https://github.com/TypQxQ/kTAY8/blob/master/LICENSE">
-    <img src="https://img.shields.io/github/license/TypQxQ/kTAY8?style=flat-square">
-  </a>
-  <a href="https://universe.roboflow.com/nozzle-detection/nozzle-detection-bdk8s">
-    <img src="https://app.roboflow.com/images/download-dataset-badge.svg"></img>
-  </a>
-  <a href="https://universe.roboflow.com/nozzle-detection/nozzle-detection-bdk8s/model/">
-    <img src="https://app.roboflow.com/images/try-model-badge.svg"></img>
-  </a>
+  <img src="doc/confusion_matrix.png" alt="Confusion Matrix" width="600">
 </p>
 
-It has one part that runs as a part of Klipper, adding the necesary commands and integration, and one part that does all the io and cpu intensive calculations as a webserver, localy or on any computer for true multithreading. 
+The **Confusion Matrix** illustrates the classification accuracy.
+*   **Diagonal Elements:** Represent correct predictions. A high value (close to 1.0) for the "nozzle" class indicates the model correctly identifies the nozzle when it is present.
+*   **Off-diagonal Elements:** Represent errors (False Positives/Negatives). Low values here confirm the model rarely confuses the background with the nozzle.
 
-It adds the following commands to klipper:
+### 2. Precision-Recall Curve
+<p align="center">
+  <img src="doc/BoxPR_curve.png" alt="PR Curve" width="600">
+</p>
 
-- `KTAY8_CALIB_CAMERA`, moves the toolhead around the current position for camera-movement data
-- `KTAY8_FIND_NOZZLE_CENTER`, detects the nozzle in the current nozzle cam image and attempts to move it to the center of the image.
-- `KTAY8_SET_ORIGIN`, sets the current X,Y position as origin to use for calibrating from.
-- `KTAY8_GET_OFFSET`, Get the offset from the current X,Y position to the origin X,Y position. Prints it to console.
-- `KTAY8_MOVE_TO_ORIGIN`, moves the toolhead to the configured center position origin as set with KTAY8_SET_ORIGIN
-- `KTAY8_SIMPLE_NOZZLE_POSITION`, checks if a nozzle is detected in the current nozzle cam image and reports whether it is found. The printer will not move.
-- `KTAY8_START_PREVIEW`, starts the camera preview mode.
-- `KTAY8_STOP_PREVIEW`, stops the camera preview mode.
+The **PR Curve** shows the trade-off between Precision and Recall at different confidence thresholds.
+*   **Precision:** "Of all the objects detected as nozzles, how many were actually nozzles?" (High precision = few false alarms).
+*   **Recall:** "Of all the actual nozzles in the image, how many did we detect?" (High recall = few missed detections).
+*   **mAP@0.5:** The area under this curve represents the overall robustness of the model.
 
-!!! !!! !!! !!! !!!
-This software is only meant for advanced users!
-Please only use while supervising your printer,
-may produce unexpected results,
-be ready to hit 'emergency stop' at any time!
-!!! !!! !!! !!! !!!
+### 3. Training Convergence (Results)
+<p align="center">
+  <img src="doc/results.png" alt="Training Results" width="800">
+</p>
 
-## How to install
+*   **Box Loss:** Measures how accurately the model draws the bounding box around the nozzle. Decreasing loss indicates improved localization.
+*   **Cls Loss (Classification):** Measures the confidence in identifying the object as a "nozzle".
+*   **mAP50 / mAP50-95:** Mean Average Precision metrics. Rising curves indicate the model is learning effectively over the training epochs.
 
-Connect to your klipper machine using SSH, run these command
+### 4. Visual Validation
+<p align="center">
+  <img src="doc/val_batch0_pred.jpg" alt="Validation Batch Prediction" width="800">
+</p>
 
-```bash
-cd ~/ && git clone https://github.com/TypQxQ/kTAY8.git && bash ~/kTAY8/install.sh
-```
+A sample batch from the validation set showing the model's predictions (bounding boxes) overlaid on ground truth data. This confirms the model can handle various orientations and lighting conditions.
 
-This will install and configure everything.
+---
 
-## Configuration
-The installation script will add a section to printer.cfg that looks like the following:
-```yml
+## 🤝 Contributing to the Model
+
+**We do not recommend retraining the model locally.** To ensure a robust, generalized model that works for everyone, we centralize the training process.
+
+### How to Contribute Data
+If the detection is inaccurate on your machine, **do not retrain**. Instead, contribute to the global dataset:
+
+1.  Enable the `send_frame_to_cloud` option in your configuration (or manually capture frames).
+2.  Send the raw images of your nozzle (from the nozzle camera) to our **Data Collection Bot** on Telegram.
+3.  These images will be labeled and integrated into the next training epoch, improving the model for the entire community.
+
+*Telegram Bot Link: [Contact Maintainer for Access]*
+
+---
+
+## 🛠️ Installation & Deployment
+
+### System Architecture
+kTAY8 operates as a standalone Python service that communicates with Klipper via HTTP APIs. It requires an SBC capable of running ONNX Runtime or TensorFlow Lite.
+
+### Automated Setup
+1.  Clone the repository to your user home directory (e.g., `/home/pi`):
+    ```bash
+    cd ~
+    git clone https://github.com/YourUsername/kTAY8.git
+    ```
+2.  Execute the deployment script:
+    ```bash
+    cd kTAY8
+    ./install.sh
+    ```
+    *This script handles dependency resolution (numpy, opencv-python, onnxruntime), systemd service registration, and `printer.cfg` injection.*
+
+3.  **Restart Klipper and Moonraker** to apply changes.
+
+---
+
+## ⚙️ Configuration Parameters
+
+Ensure your `printer.cfg` contains the `[ktay8]` section. Adjust the `nozzle_cam_url` to match your MJPEG stream source.
+
+```ini
 [ktay8]
-nozzle_cam_url: http://localhost/webcam2/snapshot?max_delay=0
+# MJPEG Stream URL (Localhost loopback recommended for low latency)
+nozzle_cam_url: http://localhost/webcam/snapshot?max_delay=0
+
+# kTAY8 Server Endpoint
 server_url: http://localhost:8085
+
+# Alignment Feedrate (mm/min)
 move_speed: 1800
+
+# Telemetry: Send frames for dataset improvement (Set to True to contribute)
 send_frame_to_cloud: false
+
+# Convergence Tolerance (Pixels) - 0 implies sub-pixel precision attempts
 detection_tolerance: 0
 ```
-If your nozzle webcamera is on another stream, change that. You can find out what the stream is called in the Mainsail camera configuration. For example, here this is webcam2, so my configuration would be:
 
-`nozzle_cam_url: http://localhost/webcam2/stream`
+<p align="center">
+  <img src="doc/mainsail-ktay8-cam-settings-example.jpg" alt="Camera Settings" width="400">
+  <img src="doc/mainsail-nozzlecam-settings-example.jpg" alt="Nozzle Cam Settings" width="400">
+</p>
 
-<img src="doc/mainsail-nozzlecam-settings-example.jpg" width="507">
+---
 
-Change the `server_url` if you run on another machine or port.
+## 🎮 Operational Workflow
 
-`move_speed` is the toolhead spped while calibrating.
+kTAY8 exposes G-Code macros for integration into print start scripts or toolchange macros.
 
-`send_frame_to_cloud` indicates if you want to contribute to possible future development of AI based detection.
+### 1. Camera Extrinsics Calibration
+Before inference, the system must map the camera's coordinate system to the printer's kinematic system (Cartesian/CoreXY).
 
-`detection_tolerance` If the nozzle position is within this many pixels when comparing frames, it's considered a match. Only whole numbers are supported.
+*   **Macro:** `CALIB_CAMERA_KTAY8`
+*   **Action:** Performs a star-pattern movement to calculate rotation angle and pixel-to-mm scale factor.
 
-## Setting up the server image in Mainsail
+### 2. Inference & Alignment
+Executes the inference pipeline to detect the nozzle centroid and iteratively moves the toolhead to align it with the camera's optical center.
 
-Add a webcam and configure it like in the image:
-- Any name you like
-- URL Stream: Leave Empty
-- URL Snapshot: pointing to your server ip on http, not https with the port number it runs on, 8085 as standard.
-- Service: Adaptive MJPEG-Streamer
-- Target FPS: 4 is enough, will ask the server for a new frame 4 times a second.
-Use the printer IP and not localhost or Mainsail will try to connect to the computer you run the webbrowser on.
+*   **Macro:** `FIND_NOZZLE_CENTER_KTAY8`
+*   **Logic:**
+    1.  Acquire Frame -> Preprocess (Resize/Normalize)
+    2.  YOLOv8 Inference -> Bounding Box & Confidence Score
+    3.  Calculate Error Vector (Delta X, Delta Y)
+    4.  Move Toolhead -> Repeat until Error < Tolerance
 
-<img src="doc/mainsail-ktay8-cam-settings-example.jpg" width="689">
+### 3. Origin Definition
+Sets the aligned position as the reference origin for tool offsets.
 
+*   **Macro:** `SET_ORIGIN_KTAY8`
 
-----
-## How to run
+---
 
-1. Run the `KTAY8_SEND_SERVER_CFG` command to configure the server.
-2. Home the printer and move the endstop or nozzle over the camera so that it is aproximatley in the middle of the image. You can run the `KTAY8_START_PREVIEW` command to help you orientate.
-2. Run the `KTAY8_CALIB_CAMERA` command to detect the nozzle or endstop. Note that it can have problems with endstops and it's easier to calibrate using a nozzle.
-3. If successfull, run the `KTAY8_FIND_NOZZLE_CENTER` command to center the nozzle or endstop.
-4. Run the `KTAY8_SET_ORIGIN` command to set this as the origin for all other offsets. If a tool is selected, this should not have any XY offsets applied.
-5. Change to another tool and move the nozzle over the camera so that it is aproximatley in the middle of the image. You can run the `KTAY8_START_PREVIEW` command to help you orientate.
-6. Run the `KTAY8_FIND_NOZZLE_CENTER` command to center the nozzle.
-7. Run the `KTAY8_GET_OFFSET` to get the offset from when the first tool or nozzle was in the middle of the image.
-8. Run step 5 - 7 for every tool to get their offset.
+## ⚠️ Troubleshooting & Diagnostics
 
-## Can it be automated?
-Of course! And here is a macro you can use as a start point:
-[ktay8_automation_example.cfg](ktay8_automation_example.cfg)
+*   **Service Status:** Check the systemd service logs:
+    ```bash
+    journalctl -u kTAY8_server.service -f
+    ```
+*   **Inference Latency:** If detection is slow, ensure you are using the **ONNX** model and that `onnxruntime` is utilizing available instruction sets (NEON/SSE).
+*   **"Nozzle Not Found":**
+    *   Verify `nozzle_cam_url` accessibility.
+    *   Ensure the nozzle is within the Field of View (FOV).
+    *   Check illumination levels.
 
-## Debug logs
-The kTAY8 server logs in memory and everything can be displayed on it's root path.
-`http://my_printer_ip_address:8085/`
+---
 
-The Client part logs to regular Klipper logs.
-
-## FAQ
-- Why does it not detect my nozzle when not near the center?
-  - The further away the nozzle i from the center, the less round will the nozzle look like.
-- What can I do to improve the detection? Clean the nozzle so the opening is visible. If you can't see the nozzle cirle, the software won't either. See previous question. Change lightning. Change distance between nozzle and camera.
-- Do I need to install the server?
-  - Yes.
-- Why not run everything inside Klipper?
-  - Using a server component moves all io and cpu intensiv work to another cpu core, preventing Klipper to timeout. Also this moves all requirements to the server, not needing to install anything in the Klipper enviroment.
-- Why install the requirements to the entire server and not using a venv and pip to install localy?
-  - Installing OpenCV, the component doing the Computer Vision magic, takes 2-3 hours to install in a venv because it needs to be compiled in place. Installing it systems wide uses the Raspberry Pi precompiled versions that are tested and maintained by the developers of the OS.
-- Can I run the server on another computer?
-  - Yes. It runs fine on Windows too.
-- Can I run the server in a Docker component?
-  - I can't see why not.
-- Will anything be sent out from my computer?
-  - Only if you allow it with the send_frame_to_cloud option. It will then only send out the unprocessed image, coordinates here it found the middle of the nozzle and what algorithm was used. This is sent to a database and is anonymous.
-- Why collect the data?
-  - To try to train an AI to find the nozzle. I don't know if and when I can do it but the more data I recieve, the more precise an AI can be with diffrent types of nozzles, heights and lightning setups.
-- Why did you build this?
-  - I was too lazy too install and run TAMV in a desktop enviroment so I spent weeks on this instead.
-- Why do I have to enter the ip adress of the printer and not localhost in my webcam configuration?
-  - This is because Mainsail runs in your browser and the address localhost maps to the computer you run the browser on.
-- What does the installation script do?
-  - It will clone the repository and execute the install script.
-The install script will update the system, install the requrements system wide, link the Klipper extensions, add configuration to printer.cfg, add moonraker automatic update, install the server a system.d process and add it to Moonraker to be able to start and stop it within your preffered web interface.
-
-## How it works
-This project consists of two parts: a Klipper plugin and a web server based on Flask and Waitress. The Klipper plugin runs within the environment managed by Klipper and does not require any additional components. The web server, on the other hand, depends on various specific components for image recognition, mathematics, statistics and web serving. This project is truly multithreaded because the web server operates in its own Python instance and can even run on a different machine. This is unlike only running in Klipper, which is only multithreaded but does not use multiple cpu cores and has to prioritize real-time interaction with the printer mainboards.
-
-The camera calibration performs small movements around the initial position to keep the nozzle centered and prevent the nozzle opening from becoming oval-shaped. It will try to find the nozzle in each position and calculate the distance in pixels between the two, already knowing the requested physical distance on the printer. It uses ten positions and skips the ones where the nozzle is not detected. It then filters out the values that deviate more than 20% from the average, removing false readings and using only true values. It finallycalculates a matrix it can use to map the distance between a point and the center on the image and the real space coordinates.
-
-When the server needs to find the center of the nozzle it will first fetch a frame from the webcamera, it is the only time it accesses the webcam feed. Then it will resize the image to 640x480 pixels. After this it will try to find a circle that would match the nozzle opening by going trough five diffrent detector and image preprocessor combinations. If it finds multiple circles, it will then use the one closest to the center of the image. It will repeat the above until it has found the same middlepoint 3 consecutive times with a tolerance of one pixel, or it times out, default 20s.
-
-## Special thanks
- - This extension uses much of the logic in TAMV. TAMV uses a GUI inside the Desktop enviroment to align toolheads using computer vision. For more information see: https://github.com/HaythamB/TAMV
-- CVToolheadCalibration that is also a Klipper plugin inspired by TAMV but for IDEX printers. For more information see: https://github.com/cawmit/klipper_cv_toolhead_calibration
-- The user psyvision from the Jubilee discord, who tested early versions of the extension and gave very valuable feedback
+**Disclaimer:** This software commands physical motion of CNC hardware. Always supervise operation during calibration sequences. The authors assume no liability for hardware damage.

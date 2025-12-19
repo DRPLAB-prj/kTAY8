@@ -1,0 +1,2 @@
+Build Date: 2025-12-18 17:39:41
+Source Model: outputs\nozzle_detector_v1\train_20251218_151705\weights\best.pt
