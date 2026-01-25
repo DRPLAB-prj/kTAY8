@@ -1,4 +1,4 @@
-# kTAY8 - klipper Tool Alignment using YOLOv8
+# kTAY8 - klipper Tool Alignment using YOLOv8n
 
 **kTAY8** is an advanced tool alignment system for Klipper firmware, leveraging **Deep Learning** and **Computer Vision** to automatically detect and center the 3D printer nozzle relative to a fixed upward-facing camera.
 
