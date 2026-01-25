@@ -1,8 +1,8 @@
-# 🦅 kTAY8 - AI-Driven Tool Alignment System
+# 🦅 kTAY8 - klipper Tool Alignment using YOLOv8
 
 **kTAY8** is an advanced tool alignment system for Klipper firmware, leveraging **Deep Learning** and **Computer Vision** to automatically detect and center the 3D printer nozzle relative to a fixed upward-facing camera.
 
-Unlike traditional systems based on **Blob Detection** or simple thresholding (which require high contrast, clean nozzles, and specific lighting), **kTAY8 employs a YOLOv8 Convolutional Neural Network (CNN)** specifically trained to perform robust object detection in challenging environments.
+Unlike traditional systems based **kTAY8 employs a YOLOv8 Convolutional Neural Network (CNN)** specifically trained to perform robust object detection in challenging environments.
 
 <p align="center">
   <img src="doc/mainsail_main.jpg" alt="kTAY8 UI Integration" width="800">
@@ -15,13 +15,13 @@ Unlike traditional systems based on **Blob Detection** or simple thresholding (w
 This project is an **evolutionary fork** of [kTAMV (Klipper Tool Alignment Machine Vision)](https://github.com/TypQxQ/kTAMV).
 Special thanks to:
 *   **TypQxQ**: The original author of kTAMV, who architected the server infrastructure and Klipper integration that serves as the backbone for this project.
-*   **Roboflow Universe Contributors**: For the initial dataset that bootstrapped the training process.
+*   **kTAMV Contributors and TypQxQ**: For the initial dataset that bootstrapped the training process.
 
 ---
 
 ## 🧠 The AI Core: YOLOv8 Inference
 
-The core of kTAY8 is a **YOLOv8n (Nano)** model, optimized and exported to **ONNX/TFLite** for edge inference on ARM-based SBCs (Single Board Computers) like Raspberry Pi and Orange Pi.
+The core of kTAY8 is a **YOLOv8n (Nano)** model, optimized and exported to **ONNX/TFLite** for edge inference on ARM-based SBCs (Single Board Computers) like Raspberry Pi.
 
 ### Why AI?
 Standard CV algorithms (e.g., OpenCV SimpleBlobDetector) fail when:
@@ -29,10 +29,11 @@ Standard CV algorithms (e.g., OpenCV SimpleBlobDetector) fail when:
 *   **Lighting Variance:** Specular reflections on the build plate or nozzle surface.
 *   **Background Complexity:** Non-uniform backgrounds confuse thresholding algorithms.
 
-**kTAY8's Neural Network** abstracts these features, learning the semantic representation of a "nozzle" regardless of surface conditions.
+**kTAY8's Neural Network** abstracts these features, learning the semantic representation of a "nozzle" "regardless of surface conditions".
 
-> **⚠️ Model Status: Alpha Release (v1)**
-> The current model included (`server/best.onnx`) is an **initial release**. While it performs well in tested environments, it may require further generalization for different camera sensors or lighting setups.
+> **⚠️ Model Status: Experimental Alpha (v1)**
+> The current model (server/best.onnx) is an initial release and is not fully tested. The project is currently in a basic state, and further development is temporarily delayed due to external factors (hardware issues with my custom 3D printer and personal work commitments).
+Note on Contributions: The Telegram bot for submitting nozzle images is not active yet because the model itself is not ready. Please wait for the completion of the Alpha phase and the merge from dev to main before attempting to contribute. The project structure is currently too fragmented for external input.
 
 ---
 
@@ -79,6 +80,9 @@ A sample batch from the validation set showing the model's predictions (bounding
 
 ## 🤝 Contributing to the Model
 
+> ⛔ Please Ignore This Section (Temporary)
+This section should be disregarded until a more stable version of the project is released. Contribution channels are currently closed while the core infrastructure is being finalized.
+
 **We do not recommend retraining the model locally.** To ensure a robust, generalized model that works for everyone, we centralize the training process.
 
 ### How to Contribute Data
@@ -93,6 +97,9 @@ If the detection is inaccurate on your machine, **do not retrain**. Instead, con
 ---
 
 ## 🛠️ Installation & Deployment
+
+> ⛔ Please Ignore This Section (Temporary)
+This section should be disregarded until a more stable version of the project is released. Contribution channels are currently closed while the core infrastructure is being finalized.
 
 ### System Architecture
 kTAY8 operates as a standalone Python service that communicates with Klipper via HTTP APIs. It requires an SBC capable of running ONNX Runtime or TensorFlow Lite.
@@ -115,6 +122,9 @@ kTAY8 operates as a standalone Python service that communicates with Klipper via
 ---
 
 ## ⚙️ Configuration Parameters
+
+> ⛔ Please Ignore This Section (Temporary)
+This section should be disregarded until a more stable version of the project is released. Contribution channels are currently closed while the core infrastructure is being finalized.
 
 Ensure your `printer.cfg` contains the `[ktay8]` section. Adjust the `nozzle_cam_url` to match your MJPEG stream source.
 
@@ -145,6 +155,9 @@ detection_tolerance: 0
 
 ## 🎮 Operational Workflow
 
+> ⛔ Please Ignore This Section (Temporary)
+This section should be disregarded until a more stable version of the project is released. Contribution channels are currently closed while the core infrastructure is being finalized.
+
 kTAY8 exposes G-Code macros for integration into print start scripts or toolchange macros.
 
 ### 1. Camera Extrinsics Calibration
@@ -172,6 +185,9 @@ Sets the aligned position as the reference origin for tool offsets.
 
 ## ⚠️ Troubleshooting & Diagnostics
 
+> ⛔ Please Ignore This Section (Temporary)
+This section should be disregarded until a more stable version of the project is released. Contribution channels are currently closed while the core infrastructure is being finalized.
+
 *   **Service Status:** Check the systemd service logs:
     ```bash
     journalctl -u kTAY8_server.service -f
@@ -184,4 +200,4 @@ Sets the aligned position as the reference origin for tool offsets.
 
 ---
 
-**Disclaimer:** This software commands physical motion of CNC hardware. Always supervise operation during calibration sequences. The authors assume no liability for hardware damage.
+**Disclaimer:** This software commands physical motion of CNC hardware. Always supervise operation during calibration sequences. The authors assume no liability for hardware or software damage.
